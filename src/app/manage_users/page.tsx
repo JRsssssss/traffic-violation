@@ -46,9 +46,20 @@ const ManageUsers = () => {
     };
   
     // Handle user deletion
-    const deleteUser = (username: string) => {
-      console.log(`Deleting user: ${username}`);
+    const deleteUser = async (userId: number) => {
+      const confirmDelete = confirm("Are you sure you want to delete this user?");
+      if (!confirmDelete) return;
+    
+      try {
+        const res = await UserService.deleteUser(userId);
+        setUsers(users.filter(user => user.id !== userId));
+        alert("User deleted successfully.");
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        alert("Failed to delete user.");
+      }
     };
+    
 
     return (
         <div className="flex-1 p-6 bg-[#CFE4F0] rounded-lg h-auto">
@@ -122,7 +133,7 @@ const ManageUsers = () => {
                 </div>
                 <button 
                   className={isManaging?`bg-red-500 text-white p-2 rounded-full hover:bg-red-600`:`hidden`}
-                  onClick={() => deleteUser(user.username)}
+                  onClick={() => deleteUser(user.id)}
                 >
                   <FiX size={18} />
                 </button>

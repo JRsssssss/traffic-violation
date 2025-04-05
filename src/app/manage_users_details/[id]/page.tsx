@@ -1,36 +1,40 @@
 'use client';
 
+import { UserService } from '@/service/user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-
-const users = [
-    { id: 1,username: 'Music', password: '1234' ,name: 'Music Auyeung', role: 'Officer', image:'/car.jpg'},
-    { id: 2,username: 'Miki', password: '1234' ,name: 'Miki Ajiki', role: 'Administrator', image:'/car.jpg' },
-    { id: 3,username: 'Kawin', password: '1234',name: 'Kawin Thimayom', role: 'Officer', image:'/car.jpg' },
-    { id: 4,username: 'Prem', password: '1234',name: 'Jirapat Ruetrakul', role: 'Officer', image:'/car.jpg' },
-    { id: 5,username: 'Music1', password: '1234',name: 'Music Auyeung', role: 'Officer', image:'/car.jpg' },
-    { id: 6,username: 'Miki1', password: '1234',name: 'Miki Ajiki', role: 'Administrator', image:'/car.jpg' },
-    { id: 7,username: 'Kawin1', password: '1234',name: 'Kawin Thimayom', role: 'Officer', image:'/car.jpg' },
-    { id: 8,username: 'Prem1', password: '1234',name: 'Jirapat Ruetrakul', role: 'Officer', image:'/car.jpg' },
-    { id: 9,username: 'Music2', password: '1234',name: 'Music Auyeung', role: 'Officer', image:'/car.jpg' },
-    { id: 10,username: 'Miki2', password: '1234',name: 'Miki Ajiki', role: 'Administrator', image:'/car.jpg' },
-    { id: 11,username: 'Kawin2', password: '1234',name: 'Kawin Thimayom', role: 'Officer', image:'/car.jpg' },
-    { id: 12,username: 'Prem2', password: '1234',name: 'Jirapat Ruetrakul', role: 'Officer', image:'/car.jpg' },
-];
 
 const ManageUserDetails = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [image, setImage] = useState<string>('');
-
+  const [editableUser, setEditableUser] = useState<any>(null);
   useEffect(() => {
-    const userId = params.id ? parseInt(params.id as string) : null;
-    const selectedUser = users.find((u) => u.id === userId);
-    if (selectedUser) {
-        setUser(selectedUser);
-        setImage(selectedUser.image);
-    }
-}, [params.id]);
+      const fetchUser = async () => {
+        const id = params?.id;
+  
+        if (id) {
+          const userId = parseInt(id);
+          const response = await UserService.getUserById(userId);
+  
+          if (response) {
+            setUser(response.user);
+            setEditableUser({...response})
+            setImage("/car.jpg");
+            console.log(editableUser);
+          } else {
+            console.error("Violation not found:", response?.error || "Unknown error");
+          }
+        } else {
+          console.error("Violation ID is invalid.");
+        }
+      };
+  
+      fetchUser();
+    }, [params]);
+  useEffect(() => {
+    console.log("Editable User:", editableUser);
+  }, [editableUser]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -38,11 +42,36 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
         const imageUrl = URL.createObjectURL(file);
         setImage(imageUrl);
     }
-};
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setUser({ ...user, [e.target.name]: e.target.value });
-};
+    setEditableUser((prev: any) => ({
+      ...prev,
+      user: {
+        ...prev.user,
+        [e.target.name]: e.target.value,
+      },
+    }));
+  };
+
+  const handleSave = async () => {
+    if (editableUser && editableUser?.user.id) {
+      try {
+        const updatedUser = await UserService.updateUser({
+          id: editableUser.user.id,
+          name: editableUser.user.name,
+          username: editableUser.user.username,
+          password: editableUser.user.password,
+          role: editableUser.user.role,
+        });
+
+        console.log("Updated User:", updatedUser);
+        router.push("/manage_users");
+      } catch (error) {
+        console.error("Error updating user:", error);
+      }
+    }
+  };
 
   if (!user) {
     return (
@@ -80,7 +109,8 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
                 <label className="w-24 font-semibold text-lg">Username:</label>
                 <input
                   type="text"
-                  value={user.username}
+                  name="username"
+                  value={editableUser.user.username}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2 border rounded-lg shadow-sm"
                 />
@@ -90,7 +120,8 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
                 <label className="w-24 font-semibold text-lg">Full Name:</label>
                 <input
                   type="text"
-                  value={user.name}
+                  name='name'
+                  value={editableUser.user.name}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2 border rounded-lg shadow-sm"
                 />
@@ -100,7 +131,7 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
                 <label className="w-24 font-semibold text-lg">Role:</label>
                 <select 
                   name="role" 
-                  value={user.role}
+                  value={editableUser.user.role}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2 border rounded-lg shadow-sm bg-white cursor-pointer"
                 >
@@ -112,7 +143,8 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
               <div className="flex items-center">
                 <label className="w-24 font-semibold text-lg">Password:</label>
                 <input
-                  value={user.password}
+                  name='password'
+                  value={editableUser.user.password}
                   onChange={handleChange}
                   className="flex-1 px-4 py-2 border rounded-lg shadow-sm"
                 />
@@ -131,10 +163,23 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
                 Cancel
               </button>
               <button
-                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition"
-                onClick={() => alert('Edit User functionality here')}
+                disabled={
+                  !editableUser?.user?.name ||
+                  !editableUser?.user?.username ||
+                  !editableUser?.user?.password ||
+                  !editableUser?.user?.role
+                }
+                className={`px-6 py-2 rounded-lg text-lg transition ${
+                  !editableUser?.user?.name ||
+                  !editableUser?.user?.username ||
+                  !editableUser?.user?.password ||
+                  !editableUser?.user?.role
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-800'
+                }`}
+                onClick={handleSave}
               >
-                Edit User
+                Save
               </button>
           </div>
         </div>

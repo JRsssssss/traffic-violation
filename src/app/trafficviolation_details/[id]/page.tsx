@@ -24,7 +24,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
           setViolation(response);
           setEditableViolation({ ...response });
           setMainImage("/car.jpg");
-          console.log(editableViolation.date); // Check if the date value is correct
+          console.log(editableViolation.violation.date); // Check if the date value is correct
         } else {
           console.error("Violation not found:", response?.error || "Unknown error");
         }
@@ -41,21 +41,27 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   }, [editableViolation]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditableViolation({
-      ...editableViolation,
-      [e.target.name]: e.target.value,
-    });
+    setEditableViolation((prev: any) => ({
+      ...prev,
+      violation:{
+        ...prev.violation,
+        [e.target.name]: e.target.value,
+      }
+    }));
   };
 
-  // const handleSave = async () => {
-  //   if (editableViolation) {
-  //     const updatedViolation = await ViolationService.updateViolation(violationId, {
-  //       type: editableViolation.type,
-  //       location: editableViolation.location,
-  //     });
-  //     console.log("Updated Violation:", updatedViolation);
-  //   }
-  // };
+  const handleSave = async () => {
+    if (editableViolation) {
+      const updatedViolation = await ViolationService.updateViolation({
+        id: editableViolation.violation.id,
+        date: editableViolation.violation.date,
+        plate: editableViolation.violation.plate,
+        type: editableViolation.violation.type,
+        location: editableViolation.violation.location,
+      });
+      console.log("Updated Violation:", updatedViolation);
+    }
+  };
 
   const handleRemove = async () => {
     if (violation) {
@@ -99,9 +105,9 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
             <div className="flex items-center">
               <label className="text-lg font-semibold w-40">Date:</label>
               <input
-                type="text"
+                type="datetime-local"
                 name="date"
-                value={editableViolation?.violation.date ? formatDate(editableViolation?.violation.date) : ""}
+                value={editableViolation?.violation.date?.slice(0, 16)} // trim to "YYYY-MM-DDTHH:mm"
                 onChange={handleChange}
                 className="border flex-1 p-2 w-full rounded-lg"
               />
@@ -142,7 +148,20 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
               <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove}>
                 Remove
               </button>
-              <button className="bg-green-400 text-white px-4 py-2 rounded-lg">
+              <button 
+                onClick={(handleSave)}
+                disabled={  !editableViolation?.violation?.date ||
+                  !editableViolation?.violation?.plate ||
+                  !editableViolation?.violation?.type ||
+                  !editableViolation?.violation?.location}
+                className={`px-4 py-2 rounded-lg text-white text-lg transition ${
+                  !editableViolation?.violation?.date ||
+                  !editableViolation?.violation?.plate ||
+                  !editableViolation?.violation?.type ||
+                  !editableViolation?.violation?.location
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-800'
+                }`}>
                 Save
               </button>
             </div>
