@@ -4,12 +4,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ViolationService } from "@/service/violations";
+import { useAuth } from "@/app/Context/AuthContext";
 
 const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
+  const { user } = useAuth();
   const [violation, setViolation] = useState<any>(null);
   const [mainImage, setMainImage] = useState<string>("");
   const [editableViolation, setEditableViolation] = useState<any>(null);
+
+  const isOfficer = user?.role.toLowerCase() === "officer";
 
   useEffect(() => {
     const fetchViolation = async () => {
@@ -19,6 +23,9 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
         const violationId = parseInt(id);
         const response = await ViolationService.getViolationById(violationId);
         console.log("API Response:", response);
+        console.log("User Role:", user?.role);
+        console.log("Is Officer:", isOfficer);
+
 
         if (response) {
           setViolation(response);
@@ -52,8 +59,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
 
   const handleSave = async () => {
     if (editableViolation) {
-      const updatedViolation = await ViolationService.updateViolation({
-        id: editableViolation.violation.id,
+      const updatedViolation = await ViolationService.updateViolation(editableViolation.violation.id,{
         date: editableViolation.violation.date,
         plate: editableViolation.violation.plate,
         type: editableViolation.violation.type,
@@ -108,6 +114,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
                 type="datetime-local"
                 name="date"
                 value={editableViolation?.violation.date?.slice(0, 16)} // trim to "YYYY-MM-DDTHH:mm"
+                readOnly={isOfficer}
                 onChange={handleChange}
                 className="border flex-1 p-2 w-full rounded-lg"
               />
@@ -119,6 +126,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
                 type="text"
                 name="plate"
                 value={editableViolation?.violation.plate || ""}
+                readOnly={isOfficer}
                 onChange={handleChange}
                 className="border flex-1 p-2 w-full rounded-lg"
               />
@@ -129,6 +137,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
                 type="text"
                 name="type"
                 value={editableViolation?.violation.type || ""}
+                readOnly={isOfficer}
                 onChange={handleChange}
                 className="border flex-1 p-2 w-full rounded-lg"
               />
@@ -139,6 +148,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
                 type="text"
                 name="location"
                 value={editableViolation?.violation.location || ""}
+                readOnly={isOfficer}
                 onChange={handleChange}
                 className="border flex-1 p-2 w-full rounded-lg"
               />

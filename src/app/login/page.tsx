@@ -3,12 +3,14 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { UserService } from '@/service/user';
+import { useAuth } from '../Context/AuthContext';
 
 const Login = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const router = useRouter();
+    const { setUser } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,6 +19,7 @@ const Login = () => {
             const response = await UserService.login({ username, password });
 
             if (response.user) {
+                setUser(response.user)
                 router.push("/trafficviolation"); // Redirect if login is successful
             } 
             else {

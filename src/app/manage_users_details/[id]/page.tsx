@@ -57,8 +57,7 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
   const handleSave = async () => {
     if (editableUser && editableUser?.user.id) {
       try {
-        const updatedUser = await UserService.updateUser({
-          id: editableUser.user.id,
+        const updatedUser = await UserService.updateUser(editableUser.user.id,{
           name: editableUser.user.name,
           username: editableUser.user.username,
           password: editableUser.user.password,
