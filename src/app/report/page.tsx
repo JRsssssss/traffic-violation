@@ -1,38 +1,36 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
-
-const reports = [
-  { id: 1, name: "Music Auyeung", date: "Dec 20 2024 19:22", status: "Awaiting Review" },
-  { id: 2, name: "Miki Ajiki", date: "Dec 19 2024 19:22", status: "Resolved" },
-  { id: 3, name: "Kawin Thimayom", date: "Dec 18 2024 19:22", status: "Dismissed" },
-  { id: 4, name: "Jirapat Ruetrakul", date: "Dec 17 2024 19:22", status: "Dismissed" },
-  { id: 5, name: "Music Auyeung", date: "Dec 20 2024 19:22", status: "Awaiting Review" },
-  { id: 6, name: "Miki Ajiki", date: "Dec 19 2024 19:22", status: "Resolved" },
-  { id: 7, name: "Kawin Thimayom", date: "Dec 18 2024 19:22", status: "Dismissed" },
-  { id: 8, name: "Jirapat Ruetrakul", date: "Dec 17 2024 19:22", status: "Dismissed" },
-  { id: 9, name: "Music Auyeung", date: "Dec 20 2024 19:22", status: "Awaiting Review" },
-  { id: 10, name: "Miki Ajiki", date: "Dec 19 2024 19:22", status: "Resolved" },
-  { id: 11, name: "Kawin Thimayom", date: "Dec 18 2024 19:22", status: "Dismissed" },
-  { id: 12, name: "Jirapat Ruetrakul", date: "Dec 17 2024 19:22", status: "Dismissed" },
-  { id: 13, name: "Music Auyeung", date: "Dec 20 2024 19:22", status: "Awaiting Review" },
-  { id: 14, name: "Miki Ajiki", date: "Dec 19 2024 19:22", status: "Resolved" },
-  { id: 15, name: "Kawin Thimayom", date: "Dec 18 2024 19:22", status: "Dismissed" },
-];
+import { ReportService } from "@/service/report";
+import { useAuth } from "../Context/AuthContext";
 
 const Reports = () => {
     const router = useRouter();
+    const [report, setReports] = useState<any[]>([])
     const [sortOrder, setSortOrder] = useState("A-Z");
     const [filter, setFilter] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const reportsPerPage = 10;
+    const { user } = useAuth();
 
+    const isOfficer = user?.role.toLowerCase() === "officer";
+    const isAdministrator = user?.role.toLowerCase() === "administrator";
+    const userId = user?.id
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            const response = await ReportService.getReportById(userId!);
+            setReports(response.report);
+        };
+
+        fetchReports();
+    }, []);
     const handleClick = (id: number) => {
       router.push(`/report_details/${id}`); // Navigate to detail page
     };
 
     // Sort function
-    const sortedReports = [...reports].sort((a, b) => {
+    const sortedReports = [...report].sort((a, b) => {
         if (sortOrder === "A-Z") return a.name.localeCompare(b.name);
         return b.name.localeCompare(a.name);
     });

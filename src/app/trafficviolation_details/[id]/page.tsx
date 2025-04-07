@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ViolationService } from "@/service/violations";
 import { useAuth } from "@/app/Context/AuthContext";
+import ReportModal from "@/app/reportModal/page";
 
 const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
@@ -12,8 +13,11 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const [violation, setViolation] = useState<any>(null);
   const [mainImage, setMainImage] = useState<string>("");
   const [editableViolation, setEditableViolation] = useState<any>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const isOfficer = user?.role.toLowerCase() === "officer";
+  const isAdministrator = user?.role.toLowerCase() === "administrator";
+  const userId = user?.id
 
   useEffect(() => {
     const fetchViolation = async () => {
@@ -23,6 +27,8 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
         const violationId = parseInt(id);
         const response = await ViolationService.getViolationById(violationId);
         console.log("API Response:", response);
+        console.log("User Id",userId);
+        console.log("Usernaem: ",user!.username)
         console.log("User Role:", user?.role);
         console.log("Is Officer:", isOfficer);
 
@@ -59,7 +65,8 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
 
   const handleSave = async () => {
     if (editableViolation) {
-      const updatedViolation = await ViolationService.updateViolation(editableViolation.violation.id,{
+      const updatedViolation = await ViolationService.updateViolation({
+        id: editableViolation.violation.id,
         date: editableViolation.violation.date,
         plate: editableViolation.violation.plate,
         type: editableViolation.violation.type,
@@ -155,29 +162,51 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
             </div>
 
             <div className="mt-6 flex gap-4">
-              <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove}>
-                Remove
-              </button>
-              <button 
-                onClick={(handleSave)}
-                disabled={  !editableViolation?.violation?.date ||
-                  !editableViolation?.violation?.plate ||
-                  !editableViolation?.violation?.type ||
-                  !editableViolation?.violation?.location}
-                className={`px-4 py-2 rounded-lg text-white text-lg transition ${
-                  !editableViolation?.violation?.date ||
-                  !editableViolation?.violation?.plate ||
-                  !editableViolation?.violation?.type ||
-                  !editableViolation?.violation?.location
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-green-600 text-white hover:bg-green-800'
-                }`}>
-                Save
-              </button>
+              {isAdministrator &&(
+                <>
+                  <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove}>
+                    Remove
+                  </button>
+                  <button 
+                    onClick={(handleSave)}
+                    disabled={  !editableViolation?.violation?.date ||
+                      !editableViolation?.violation?.plate ||
+                      !editableViolation?.violation?.type ||
+                      !editableViolation?.violation?.location}
+                    className={`px-4 py-2 rounded-lg text-white text-lg transition ${
+                      !editableViolation?.violation?.date ||
+                      !editableViolation?.violation?.plate ||
+                      !editableViolation?.violation?.type ||
+                      !editableViolation?.violation?.location
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-green-600 text-white hover:bg-green-800'
+                    }`}>
+                    Save
+                  </button>
+                </>
+              )
+              }
+              {isOfficer &&(
+                <>
+                  <button className="bg-blue-500 text-white px-4 py-2 rounded-lg" 
+                          onClick={() => setIsReportModalOpen(true)}>
+                      Report
+                  </button>
+                  <button className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+                      Generate Ticket
+                  </button>
+                </>
+              )
+              }
             </div>
           </div>
         </div>
       </div>
+      {isReportModalOpen && (
+        <ReportModal violationId={editableViolation.violation.id} 
+                     userId = {userId!}
+                     onClose={() => setIsReportModalOpen(false)} />
+      )}
     </div>
   );
 };

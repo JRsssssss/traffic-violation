@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "./navbar";
+import RequireAuth from "./RequireAuth";
 
 export default function NavbarWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

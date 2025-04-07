@@ -9,33 +9,23 @@ export const UserService = {
   },
 
   async getUserById(userId: number) {
-    const response = await axios.get(`${API_URL}/User/${userId}`);
+    const response = await axios.post(`${API_URL}/User/userById`, {id: userId});
     return response.data;
   },
 
-  // 🔹 Create a new user
-  async createUser(userData: {
-    name: string;
-    username: string;
-    password: string;
-    role: string;
-  }) {
+  async createUser(userData: { name: string; username: string; password: string; role: string }) {
     const response = await axios.post(`${API_URL}/User/createUser`, userData);
-    console.log(response);
+    console.log(response)
     return response.data;
   },
 
-  // 🔹 Update user details
-  async updateUser(
-    userId: number,
-    updatedData: Partial<{id: number; name: string; username: string; password: string; role: string }>
-  ) {
-    const response = await axios.put(`${API_URL}/User/${userId}`, updatedData);
+  async updateUser(updatedData: Partial<{id: number; name: string; username: string; password: string; role: string }>) {
+    const response = await axios.put(`${API_URL}/User/updateUserById`, updatedData);
     return response.data;
   },
 
   async deleteUser(userId: number) {
-    const response = await axios.delete(`${API_URL}/User/${userId}`);
+    const response = await axios.delete(`${API_URL}/User/deleteUser`, {data: { userId }});
     return response.data;
   },
   

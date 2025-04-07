@@ -15,20 +15,13 @@ export const ViolationService = {
     return response.data;
   },
 
-  // 🔹 Update a violation
-  async updateViolation(
-    violationId: number,
-    updatedData: Partial<{date: Date; plate:string; type: string; location: string; flagged: boolean }>
-  ) {
-    const response = await axios.put(
-      `${API_URL}/Violation/${violationId}`,
-      updatedData
-    );
+  async updateViolation(updatedData: Partial<{id: number, date: Date, plate: string, type: string; location: string; }>) {
+    const response = await axios.put(`${API_URL}/Violation/updateViolationById`, updatedData);
     return response.data;
   },
 
   async deleteViolation(violationId: number) {
-    const response = await axios.delete(`${API_URL}/Violation/${violationId}`);
+    const response = await axios.delete(`${API_URL}/Violation/deleteViolation`, {data: violationId});
     return response.data;
   },
 };
