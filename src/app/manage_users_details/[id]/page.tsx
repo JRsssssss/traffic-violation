@@ -9,6 +9,7 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
   const [user, setUser] = useState<any>(null);
   const [image, setImage] = useState<string>('');
   const [editableUser, setEditableUser] = useState<any>(null);
+  
   useEffect(() => {
       const fetchUser = async () => {
         const id = params?.id;

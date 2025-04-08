@@ -21,7 +21,7 @@ export const ViolationService = {
   },
 
   async deleteViolation(violationId: number) {
-    const response = await axios.delete(`${API_URL}/Violation/deleteViolation`, {data: violationId});
+    const response = await axios.delete(`${API_URL}/Violation/deleteViolation`, {data: { id: violationId }});
     return response.data;
   },
 };

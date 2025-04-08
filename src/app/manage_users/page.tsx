@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FiX } from 'react-icons/fi';
 import { UserService } from '@/service/user';
 import RequireAdmin from '@/Components/RequireAdmin';
+import ConfirmDialog from '@/Components/confirmationDialog';
 
 const ManageUsers = () => {
     const router = useRouter();
@@ -15,6 +16,8 @@ const ManageUsers = () => {
     const usersPerPage = 10;
     const [currentPage, setCurrentPage] = useState(1);
     const [isManaging, setIsManaging] = useState(false);
+    const [confirmOpen, setConfirmOpen] = useState(false);
+    const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
     useEffect(() => {
       const fetchUser = async () => {
@@ -48,8 +51,6 @@ const ManageUsers = () => {
   
     // Handle user deletion
     const deleteUser = async (userId: number) => {
-      const confirmDelete = confirm("Are you sure you want to delete this user?");
-      if (!confirmDelete) return;
     
       try {
         const res = await UserService.deleteUser(userId);
@@ -112,7 +113,6 @@ const ManageUsers = () => {
                 <div className="flex font-semibold p-3 border-b text-center">
                   <span className="flex-1">Name</span>
                   <span className="flex-1">Permissions</span>
-                  <span className="flex-1">Flags</span>
                 </div>
       
               {/* Table Rows */}
@@ -129,12 +129,11 @@ const ManageUsers = () => {
                   <span className="flex-1">{user.role}</span>
 
                   {/* Manage Mode: Show "X" delete button */}
-                  <div className="flex-1 flex justify-center">
-                    <button className="bg-gray-200 p-3 rounded-lg">View Flags</button>
-                  </div>
                   <button 
                     className={isManaging?`bg-red-500 text-white p-2 rounded-full hover:bg-red-600`:`hidden`}
-                    onClick={() => deleteUser(user.id)}
+                    onClick={() => {
+                      setSelectedUserId(user.id);
+                      setConfirmOpen(true);}}
                   >
                     <FiX size={18} />
                   </button>
@@ -159,7 +158,23 @@ const ManageUsers = () => {
                   >
                       Next
                   </button>
-              </div>
+            </div>
+            <ConfirmDialog
+                open={confirmOpen}
+                title="Remove User"
+                message={`Are you sure you want Remove this user?`}
+                onCancel={() => {
+                  setConfirmOpen(false);
+                  setSelectedUserId(null);
+                }}
+                onConfirm={() => {
+                  if (selectedUserId !== null) {
+                    deleteUser(selectedUserId);
+                    setConfirmOpen(false);
+                    setSelectedUserId(null);
+                  }
+                }}
+              />
         </div>
 
       );

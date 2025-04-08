@@ -4,12 +4,16 @@ import { useRouter } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/app/Context/AuthContext";
 import { ReportService } from "@/service/report";
+import ConfirmDialog from "@/Components/confirmationDialog";
+
 
 const ReportDetails = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const {user} = useAuth();
   const reportId = parseInt(params.id);
   const [status, setStatus] = useState<any>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [report, setReport] = useState<{
     id: number;
     officerName: string;
@@ -43,8 +47,19 @@ const ReportDetails = ({ params }: { params: { id: string } }) => {
     router.push(`/trafficviolation_details/${id}`); // Navigate to detail page
   };
 
-  const handleStatusChange = (newStatus: string) => {
-    setStatus(newStatus);
+  const handleStatusConfirm = async () => {
+    if (!pendingStatus) return;
+    try {
+      await ReportService.updateReportById(reportId, pendingStatus);
+      setReport((prev) =>
+        prev ? { ...prev, status: pendingStatus } : prev
+      );
+    } catch (error) {
+      console.error("Failed to update report status:", error);
+    } finally {
+      setConfirmOpen(false);
+      setPendingStatus(null);
+    }
   };
 
   if (loading) return <div className="text-center">Loading...</div>;
@@ -84,13 +99,34 @@ const ReportDetails = ({ params }: { params: { id: string } }) => {
                     View Violation Information
           </button>
           {isAdministrator && (
-              <div className="flex gap-4 ml-auto">
-                <button onClick={() => handleStatusChange("Resolved")} className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md">Resolve</button>
-                <button onClick={() => handleStatusChange("Dismissed")} className="px-4 py-2 bg-red-600 text-white rounded-lg shadow-md">Dismiss</button>
-              </div>
-            )
-          }
-          
+            <div className="flex gap-4 ml-auto">
+              <button
+                onClick={() => {
+                  setPendingStatus("Resolved");
+                  setConfirmOpen(true);
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg shadow-md"
+              >
+                Resolve
+              </button>
+              <button
+                onClick={() => {
+                  setPendingStatus("Dismissed");
+                  setConfirmOpen(true);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg shadow-md"
+              >
+                Dismiss
+              </button>
+              <ConfirmDialog
+                open={confirmOpen}
+                title="Change Report Status"
+                message={`Are you sure you want to mark this report as "${pendingStatus}"?`}
+                onCancel={() => setConfirmOpen(false)}
+                onConfirm={handleStatusConfirm}
+              />
+            </div>
+          )}          
         </div>
       </div>
     </div>

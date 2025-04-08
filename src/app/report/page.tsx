@@ -58,7 +58,7 @@ const Reports = () => {
     };
 
     const sortedReports = [...report].sort((a, b) => {
-        if (sortOrder === "A-Z") return b.status.localeCompare(a.status);
+        if (sortOrder === "Z-A") return b.status.localeCompare(a.status);
         return a.status.localeCompare(b.status);
     });
 

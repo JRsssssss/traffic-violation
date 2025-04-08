@@ -14,6 +14,8 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const [mainImage, setMainImage] = useState<string>("");
   const [editableViolation, setEditableViolation] = useState<any>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   const isOfficer = user?.role.toLowerCase() === "officer";
   const isAdministrator = user?.role.toLowerCase() === "administrator";
@@ -77,9 +79,9 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   };
 
   const handleRemove = async () => {
-    if (violation) {
-      await ViolationService.deleteViolation(violation);
-      router.push("/traffic-violations");
+    if (editableViolation.violation.id) {
+      await ViolationService.deleteViolation(editableViolation.violation.id);
+      router.push("/trafficviolation");
     }
   };
 
@@ -164,7 +166,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
             <div className="mt-6 flex gap-4">
               {isAdministrator &&(
                 <>
-                  <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove}>
+                  <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove} >
                     Remove
                   </button>
                   <button 
