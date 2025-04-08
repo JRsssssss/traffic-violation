@@ -9,10 +9,30 @@ export const ReportService = {
         return response.data;
     },
 
-    async getReportById(officerId: number) {
-        const response = await axios.post(`${API_URL}/Report/getReportById`, {
+    async getReportByOfficerId(officerId: number) {
+        const response = await axios.post(`${API_URL}/Report/getReportByOfficerId`, {
           id: officerId,
         });
         return response.data;
-      },
+    },
+
+    async getAllReports() {
+        const response = await axios.get(`${API_URL}/Report/getAllReports`);
+        return response.data;
+    },
+
+    async getReportById(id: number) {
+        const response = await axios.post(`${API_URL}/Report/getReportById`, {
+          id: id,
+        });
+        return response.data;
+    },
+
+    async updateReportById(id: number, status: string) {
+        const response = await axios.put(`${API_URL}/Report/updateReportById`, {
+          id: id,
+          status: status,
+        });
+        return response.data;
+    },
 }

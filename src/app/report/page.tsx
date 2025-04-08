@@ -15,36 +15,62 @@ const Reports = () => {
 
     const isOfficer = user?.role.toLowerCase() === "officer";
     const isAdministrator = user?.role.toLowerCase() === "administrator";
-    const userId = user?.id
+    const userId = user?.id;
+    const username = user?.username;
+
 
     useEffect(() => {
         const fetchReports = async () => {
-            const response = await ReportService.getReportById(userId!);
-            setReports(response.report);
+            let response;
+    
+            if (isAdministrator) {
+                response = await ReportService.getAllReports(); // new method for admin
+            } 
+            
+            else {
+                response = await ReportService.getReportByOfficerId(userId!); // existing method for officer
+            }
+    
+            if ('reports' in response) {
+                setReports(response.reports);
+            }
         };
+    
+        if (userId) {
+            fetchReports();
+        }
+    }, [userId, isAdministrator]);
+    
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false 
+        });
+    };
 
-        fetchReports();
-    }, []);
     const handleClick = (id: number) => {
       router.push(`/report_details/${id}`); // Navigate to detail page
     };
 
-    // Sort function
     const sortedReports = [...report].sort((a, b) => {
-        if (sortOrder === "A-Z") return a.name.localeCompare(b.name);
-        return b.name.localeCompare(a.name);
+        if (sortOrder === "A-Z") return b.status.localeCompare(a.status);
+        return a.status.localeCompare(b.status);
     });
 
     // Filter function
     const filteredReports = sortedReports.filter((report) =>
-        report.name.toLowerCase().includes(filter.toLowerCase())
+        report.status.toLowerCase().includes(filter.toLowerCase())
     );
-
     // Pagination logic
     const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
-    const indexOfLastReport = currentPage * reportsPerPage; 
-    const indexOfFirstReport = indexOfLastReport - reportsPerPage;
-    const currentReports = filteredReports.slice(indexOfFirstReport, indexOfLastReport);
+    const indexOfLastViolation = currentPage * reportsPerPage;
+    const indexOfFirstViolation = indexOfLastViolation - reportsPerPage;
+    const currentReports = filteredReports.slice(indexOfFirstViolation, indexOfLastViolation);
 
     return (
         <div className="flex-1 p-6 bg-[#CFE4F0] rounded-lg h-screen">
@@ -85,9 +111,9 @@ const Reports = () => {
                     {/* Table Rows */}
                     {currentReports.map((report, index) => (
                     <div key={index} onClick={() => handleClick(report.id)} className="flex p-4 border-b items-center text-center">
-                        <span className="flex-1">{report.name}</span>
-                        <span className="flex-1">{report.name}</span>
-                        <span className="flex-1">{report.date}</span>
+                        <span className="flex-1">{report.id}</span>
+                        <span className="flex-1">{report.officerName}</span>
+                        <span className="flex-1">{formatDate(report.dateCreated)}</span>
                         <span className={`flex-1 ${
                         report.status === "Awaiting Review"
                         ? "text-orange-600"

@@ -29,11 +29,18 @@ const Navbar = () => {
                 <span>Manage Users</span>
               </Link>
             )}
-
-            <Link href="/report" className="p-4 hover:bg-gray-700 rounded-lg flex gap-4 items-center">
-              <GoAlertFill size={30}/>
-              <span>Report</span>
-            </Link>
+            {user?.role === "Officer" && (
+              <Link href="/report" className="p-4 hover:bg-gray-700 rounded-lg flex gap-4 items-center">
+                <GoAlertFill size={30}/>
+                <span>My Report</span>
+              </Link>
+            )}
+            {user?.role === "Administrator" && (
+              <Link href="/report" className="p-4 hover:bg-gray-700 rounded-lg flex gap-4 items-center">
+                <GoAlertFill size={30}/>
+                <span>Report</span>
+              </Link>
+            )}
             <Link href="/dashboard" className="p-4 hover:bg-gray-700 rounded-lg flex gap-4 items-center">
               <IoStatsChart size={30}/>
               <span>Dashboard</span>

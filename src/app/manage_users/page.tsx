@@ -17,13 +17,13 @@ const ManageUsers = () => {
     const [isManaging, setIsManaging] = useState(false);
 
     useEffect(() => {
-      const fetchViolations = async () => {
+      const fetchUser = async () => {
         const response = await UserService.getAllUsers();
         setUsers(response);
         console.log(users);
       };
   
-      fetchViolations();
+      fetchUser();
     }, []);
     // Sort function
     const sortedUsers = [...users].sort((a, b) => {

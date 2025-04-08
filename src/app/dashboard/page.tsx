@@ -1,103 +1,202 @@
 "use client";
-import React, { useState } from "react";
+import { ViolationService } from "@/service/violations";
+import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
-const mockData = [
-  { id: 1, location: "Main Street", type: "Speeding", count: 5, date: "2024-03-01" },
-  { id: 2, location: "Highway 21", type: "Red Light", count: 3, date: "2024-03-02" },
-  { id: 3, location: "Elm Ave", type: "Illegal Parking", count: 2, date: "2024-03-03" },
-  { id: 4, location: "Baker St", type: "Speeding", count: 4, date: "2024-03-04" },
-  { id: 5, location: "5th Ave", type: "Seatbelt Violation", count: 1, date: "2024-03-05" },
-  { id: 6, location: "Sunset Blvd", type: "Speeding", count: 6, date: "2024-03-06" },
-  { id: 7, location: "Lakeview Dr", type: "Illegal Parking", count: 2, date: "2024-03-07" },
-  { id: 8, location: "Central Park", type: "Speeding", count: 5, date: "2024-03-08" },
-  { id: 9, location: "Hill Rd", type: "Red Light", count: 3, date: "2024-03-09" },
-  { id: 10, location: "Broadway", type: "Seatbelt Violation", count: 2, date: "2024-03-10" },
-];
-
-const getTopViolations = () => {
-    const counts: Record<string, number> = mockData.reduce((acc, { type, count }) => {
-      acc[type] = (acc[type] || 0) + count;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-};
-  
-  const getTopLocations = () => {
-    const counts: Record<string, number> = mockData.reduce((acc, { location, count }) => {
-      acc[location] = (acc[location] || 0) + count;
-      return acc;
-    }, {} as Record<string, number>);
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
-};
-
 const Dashboard = () => {
+  const [violations, setViolations] = useState<any[]>([]);
   const [selectedType, setSelectedType] = useState("All");
   const [selectedDate, setSelectedDate] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const filteredData = mockData.filter(
-    (item) =>
-      (selectedType === "All" || item.type === selectedType) &&
-      (selectedDate === "" || item.date === selectedDate)
-  );
+  useEffect(() => {
+    const fetchViolations = async () => {
+      try {
+        const response = await ViolationService.getAllViolations();
+        setViolations(response.violations);
+      } catch (error) {
+        console.error("Error fetching violations:", error);
+      }
 
+    };
+
+    fetchViolations();
+  }, []);
+
+  const filteredData = violations.filter((item) => {
+    const matchType = selectedType === "All" || item.type === selectedType;
+    const itemDate = new Date(item.date);
+    const matchStart = !startDate || itemDate >= new Date(startDate);
+    const matchEnd = !endDate || itemDate <= new Date(endDate);
+    return matchType && matchStart && matchEnd;
+  });
+  
+  const getTopViolations = () => {
+    const counts: Record<string, number> = {};
+    violations.forEach(({ type }) => {
+      counts[type] = (counts[type] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  };
+
+  const getTopLocations = () => {
+    const counts: Record<string, number> = {};
+    violations.forEach(({ location }) => {
+      if (location) counts[location] = (counts[location] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  };
+
+  const getLatestViolation = () => {
+    if (!violations.length) return null;
+    return [...violations]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  };
+  
+  const groupedChartData = () => {
+    const provinceMap: Record<string, Record<string, number>> = {};
+  
+    filteredData.forEach(({ location, type }) => {
+      const province = location || "Unknown";
+      if (!provinceMap[province]) {
+        provinceMap[province] = {};
+      }
+      if (!provinceMap[province][type]) {
+        provinceMap[province][type] = 0;
+      }
+      provinceMap[province][type]++;
+    });
+  
+    const uniqueTypes = [...new Set(filteredData.map((v) => v.type))];
+  
+    const chartData = Object.entries(provinceMap).map(([province, types]) => {
+      const row: any = { province };
+      uniqueTypes.forEach((t) => {
+        row[t] = types[t] || 0;
+      });
+      return row;
+    });
+  
+    return { chartData, uniqueTypes };
+  };
+  
   return (
     <div className="p-6 bg-[#CFE4F0] rounded-lg h-auto">
       <h1 className="text-4xl font-bold text-center text-[#1a3153] mb-6">Dashboard</h1>
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold">Number of Traffic Violations</h2>
-          <p>Violations Today: 7</p>
-          <p>Violations This Week: 30</p>
-          <p>Violations This Month: 53</p>
+          <p>Violations Today: {
+            violations.filter(v => new Date(v.date).toDateString() === new Date().toDateString()).length
+          }</p>
+          <p>Violations This Week: {
+            violations.filter(v => {
+              const d = new Date(v.date);
+              const now = new Date();
+              const diff = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
+              return diff <= 7;
+            }).length
+          }</p>
+          <p>Violations This Month: {
+            violations.filter(v => {
+              const d = new Date(v.date);
+              const now = new Date();
+              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            }).length
+          }</p>
         </div>
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold">Traffic Violations</h2>
-          <select value={selectedType} onChange={(e) => setSelectedType(e.target.value)} className="border p-3 rounded-lg">
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="border p-3 rounded-lg"
+          >
             <option value="All">All</option>
-            <option value="Speeding">Speeding</option>
-            <option value="Red Light">Red Light</option>
-            <option value="Illegal Parking">Illegal Parking</option>
-            <option value="Seatbelt Violation">Seatbelt Violation</option>
+            {[...new Set(violations.map(v => v.type))].map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
           </select>
-          <input
-            type="date"
-            className="ml-2 p-2 border rounded-lg"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
+          <div className="flex gap-2 mt-2">
+          <div>
+            <label className="block text-sm font-medium">Start Date</label>
+            <input
+              type="date"
+              className="p-2 border rounded-lg"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium">End Date</label>
+            <input
+              type="date"
+              className="p-2 border rounded-lg"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold">Top Traffic Violations</h2>
-          <ul>
-            {getTopViolations().map(([type, count]) => (
-              <li key={type}>{type}: {count as number}</li>
-            ))}
-          </ul>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold">Top Locations</h2>
-          <ul>
-            {getTopLocations().map(([location, count]) => (
-              <li key={location}>{location}: {count as number}</li>
-            ))}
-          </ul>
+        <div className="col-span-2">
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold">Top Traffic Violations</h2>
+              <ul>
+                {getTopViolations().map(([type, count]) => (
+                  <li key={type}>{type}: {count}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold">Top Locations</h2>
+              <ul>
+                {getTopLocations().map(([location, count]) => (
+                  <li key={location}>{location}: {count}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold">Latest Traffic Violation</h2>
+              {getLatestViolation() ? (
+                <div className="mt-2">
+                  <p><strong>Type:</strong> {getLatestViolation().type}</p>
+                  <p><strong>Location:</strong> {getLatestViolation().location || "Unknown"}</p>
+                  <p><strong>Date:</strong> {new Date(getLatestViolation().date).toLocaleString()}</p>
+                </div>
+              ) : (
+                <p>No violations available.</p>
+              )}
+            </div>
+          </div>
         </div>
+
         <div className="bg-white rounded-lg shadow-md p-6 col-span-2">
-          <h2 className="text-xl font-semibold">Traffic Violations Chart</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={filteredData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-              <XAxis dataKey="location" />
+          <h2 className="text-xl font-semibold">Traffic Violations Chart by Province</h2>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart
+              data={groupedChartData().chartData}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
+              <XAxis dataKey="province" />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="count" fill="#8884d8" />
+              {groupedChartData().uniqueTypes.map((type, index) => (
+                <Bar
+                  key={type}
+                  dataKey={type}
+                  fill={["#8884d8", "#82ca9d", "#ffc658", "#ff8042"][index % 4]}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
     </div>
   );
+
 };
 
 export default Dashboard;
