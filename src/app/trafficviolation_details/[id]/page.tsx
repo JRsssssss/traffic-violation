@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ViolationService } from "@/service/violations";
@@ -9,15 +9,28 @@ import ReportModal from "@/app/reportModal/page";
 import RequireAuth from "@/Components/RequireAuth";
 import { TicketService } from "@/service/ticket";
 
+// Define proper types for the violation data
+interface ViolationType {
+  id: number;
+  date: string;
+  plate: string;
+  type: string;
+  location: string;
+  imageUrl?: string[];
+}
+
+interface ViolationData {
+  violation: ViolationType;
+}
+
 const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
   const { user } = useAuth();
-  const [violation, setViolation] = useState<any>(null);
+  const [violation, setViolation] = useState<ViolationData | null>(null);
   const [mainImage, setMainImage] = useState<string>("");
-  const [editableViolation, setEditableViolation] = useState<any>(null);
+  const [editableViolation, setEditableViolation] =
+    useState<ViolationData | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   const isOfficer = user?.role.toLowerCase() === "officer";
   const isAdministrator = user?.role.toLowerCase() === "administrator";
@@ -40,7 +53,6 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
           setViolation(response);
           setEditableViolation({ ...response });
           setMainImage(response.violation.imageUrl?.[0]);
-          console.log(editableViolation.violation.date); // Check if the date value is correct
         } else {
           console.error(
             "Violation not found:",
@@ -60,20 +72,23 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   }, [editableViolation]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditableViolation((prev: any) => ({
-      ...prev,
-      violation: {
-        ...prev.violation,
-        [e.target.name]: e.target.value,
-      },
-    }));
+    setEditableViolation((prev: ViolationData | null) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        violation: {
+          ...prev.violation,
+          [e.target.name]: e.target.value,
+        },
+      };
+    });
   };
 
   const handleSave = async () => {
     if (editableViolation) {
       const updatedViolation = await ViolationService.updateViolation({
         id: editableViolation.violation.id,
-        date: editableViolation.violation.date,
+        date: new Date(editableViolation.violation.date), // Convert string to Date
         plate: editableViolation.violation.plate,
         type: editableViolation.violation.type,
         location: editableViolation.violation.location,
@@ -83,15 +98,10 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   };
 
   const handleRemove = async () => {
-    if (editableViolation.violation.id) {
+    if (editableViolation && editableViolation.violation.id) {
       await ViolationService.deleteViolation(editableViolation.violation.id);
       router.push("/trafficviolation");
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB"); // Example: '4/1/2025'
   };
 
   const handleGenerateTicket = async () => {

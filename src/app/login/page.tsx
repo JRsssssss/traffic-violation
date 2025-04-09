@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { UserService } from "@/service/user";
 import { useAuth } from "../Context/AuthContext";
 
@@ -25,7 +25,7 @@ const Login = () => {
       } else {
         setError(response.error || "Invalid username or password.");
       }
-    } catch (error) {
+    } catch {
       setError("Login failed. Please try again.");
     }
   };
