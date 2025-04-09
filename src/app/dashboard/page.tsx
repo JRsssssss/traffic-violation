@@ -1,4 +1,5 @@
 "use client";
+import RequireAuth from "@/Components/RequireAuth";
 import { ViolationService } from "@/service/violations";
 import React, { useEffect, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
@@ -82,7 +83,8 @@ const Dashboard = () => {
   };
   
   return (
-    <div className="p-6 bg-[#CFE4F0] rounded-lg h-auto">
+    <RequireAuth>
+      <div className="p-6 bg-[#CFE4F0] rounded-lg h-auto">
       <h1 className="text-4xl font-bold text-center text-[#1a3153] mb-6">Dashboard</h1>
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -194,7 +196,9 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
       </div>
-    </div>
+      </div>
+    </RequireAuth>
+
   );
 
 };

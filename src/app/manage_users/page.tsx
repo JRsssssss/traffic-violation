@@ -6,6 +6,7 @@ import { FiX } from 'react-icons/fi';
 import { UserService } from '@/service/user';
 import RequireAdmin from '@/Components/RequireAdmin';
 import ConfirmDialog from '@/Components/confirmationDialog';
+import RequireAuth from '@/Components/RequireAuth';
 
 const ManageUsers = () => {
     const router = useRouter();
@@ -64,6 +65,7 @@ const ManageUsers = () => {
     
 
     return (
+      <RequireAuth>
         <div className="flex-1 p-6 bg-[#CFE4F0] rounded-lg h-auto">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-4xl font-bold text-center flex-1">Users</h1>
@@ -176,6 +178,8 @@ const ManageUsers = () => {
                 }}
               />
         </div>
+      </RequireAuth>
+
 
       );
 };

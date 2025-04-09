@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from 'next/navigation';
 import { ReportService } from "@/service/report";
 import { useAuth } from "../Context/AuthContext";
+import RequireAuth from "@/Components/RequireAuth";
 
 const Reports = () => {
     const router = useRouter();
@@ -73,7 +74,8 @@ const Reports = () => {
     const currentReports = filteredReports.slice(indexOfFirstViolation, indexOfLastViolation);
 
     return (
-        <div className="flex-1 p-6 bg-[#CFE4F0] rounded-lg h-screen">
+        <RequireAuth>
+            <div className="flex-1 p-6 bg-[#CFE4F0] rounded-lg h-screen">
             <h1 className="text-4xl font-bold text-center text-[#1a3153] mb-6">Reports</h1>
 
             {/* Sorting & Filter */}
@@ -143,7 +145,9 @@ const Reports = () => {
                     Next
                 </button>
             </div>
-        </div>
+            </div>
+        </RequireAuth>
+
             
             
     );
