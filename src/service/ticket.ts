@@ -59,4 +59,17 @@ export const TicketService = {
     });
     return response.data;
   },
+
+  // generate ticket
+  async generateTicket(violationId: number) {
+    const response = await axios.get(
+      `${API_URL}/Violation/getTicketFromViolation`,
+      {
+        headers: getAuthHeader(),
+        params: { violationId },
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  },
 };

@@ -7,6 +7,7 @@ import { ViolationService } from "@/service/violations";
 import { useAuth } from "@/app/Context/AuthContext";
 import ReportModal from "@/app/reportModal/page";
 import RequireAuth from "@/Components/RequireAuth";
+import { TicketService } from "@/service/ticket";
 
 const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const router = useRouter();
@@ -20,7 +21,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
 
   const isOfficer = user?.role.toLowerCase() === "officer";
   const isAdministrator = user?.role.toLowerCase() === "administrator";
-  const userId = user?.id
+  const userId = user?.id;
 
   useEffect(() => {
     const fetchViolation = async () => {
@@ -30,11 +31,10 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
         const violationId = parseInt(id);
         const response = await ViolationService.getViolationById(violationId);
         console.log("API Response:", response);
-        console.log("User Id",userId);
-        console.log("Usernaem: ",user!.username)
+        console.log("User Id", userId);
+        console.log("Usernaem: ", user!.username);
         console.log("User Role:", user?.role);
         console.log("Is Officer:", isOfficer);
-
 
         if (response) {
           setViolation(response);
@@ -42,7 +42,10 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
           setMainImage(response.violation.imageUrl?.[0]);
           console.log(editableViolation.violation.date); // Check if the date value is correct
         } else {
-          console.error("Violation not found:", response?.error || "Unknown error");
+          console.error(
+            "Violation not found:",
+            response?.error || "Unknown error"
+          );
         }
       } else {
         console.error("Violation ID is invalid.");
@@ -59,10 +62,10 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditableViolation((prev: any) => ({
       ...prev,
-      violation:{
+      violation: {
         ...prev.violation,
         [e.target.name]: e.target.value,
-      }
+      },
     }));
   };
 
@@ -91,6 +94,36 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
     return date.toLocaleDateString("en-GB"); // Example: '4/1/2025'
   };
 
+  const handleGenerateTicket = async () => {
+    if (editableViolation && userId) {
+      try {
+        // Show loading indicator or message
+        const pdfBlob = await TicketService.generateTicket(
+          editableViolation.violation.id
+        );
+
+        // The response is already a Blob, so we don't need to create one
+        const url = window.URL.createObjectURL(pdfBlob);
+
+        // Create a temporary anchor element
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `ticket_${editableViolation.violation.id}.pdf`;
+
+        // Append to the document, click it, and remove it
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the URL object
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error generating ticket:", error);
+        alert("Failed to generate ticket. Please try again.");
+      }
+    }
+  };
+
   if (!violation || !editableViolation) {
     return <p className="text-center text-red-500">Violation not found.</p>;
   }
@@ -99,22 +132,34 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
     <RequireAuth>
       <div className="p-6 bg-[#CFE4F0] h-screen flex flex-col items-center rounded-lg">
         <div className="bg-white p-6 rounded-lg shadow-lg w-3/4">
-          <h1 className="text-4xl font-bold text-center mb-6">Violation #{editableViolation.violation.id}</h1>
+          <h1 className="text-4xl font-bold text-center mb-6">
+            Violation #{editableViolation.violation.id}
+          </h1>
           <div className="flex items-center">
             <div className="flex flex-col items-center w-1/3 ">
-              <Image src={mainImage} alt="Violation" width={250} height={150} className="rounded-lg" />
+              <Image
+                src={mainImage}
+                alt="Violation"
+                width={250}
+                height={150}
+                className="rounded-lg"
+              />
               <div className="flex gap-2 mt-4">
-              {violation.violation.imageUrl?.map((img: string, index: number) => (
-                  <Image
-                    key={index}
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    width={80}
-                    height={60}
-                    className={`rounded-lg cursor-pointer ${mainImage === img ? "border-2 border-blue-500" : ""}`}
-                    onClick={() => setMainImage(img)}
-                  />
-                ))}
+                {violation.violation.imageUrl?.map(
+                  (img: string, index: number) => (
+                    <Image
+                      key={index}
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      width={80}
+                      height={60}
+                      className={`rounded-lg cursor-pointer ${
+                        mainImage === img ? "border-2 border-blue-500" : ""
+                      }`}
+                      onClick={() => setMainImage(img)}
+                    />
+                  )
+                )}
               </div>
             </div>
 
@@ -132,7 +177,9 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
               </div>
 
               <div className="flex items-center">
-                <label className="text-lg font-semibold w-40">License Plate No.:</label>
+                <label className="text-lg font-semibold w-40">
+                  License Plate No.:
+                </label>
                 <input
                   type="text"
                   name="plate"
@@ -143,7 +190,9 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
                 />
               </div>
               <div className="flex items-center">
-                <label className="text-lg font-semibold w-40">Violation Type:</label>
+                <label className="text-lg font-semibold w-40">
+                  Violation Type:
+                </label>
                 <input
                   type="text"
                   name="type"
@@ -166,54 +215,64 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
               </div>
 
               <div className="mt-6 flex gap-4">
-                {isAdministrator &&(
+                {isAdministrator && (
                   <>
-                    <button className="bg-red-500 text-white px-4 py-2 rounded-lg" onClick={handleRemove} >
+                    <button
+                      className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                      onClick={handleRemove}
+                    >
                       Remove
                     </button>
-                    <button 
-                      onClick={(handleSave)}
-                      disabled={  !editableViolation?.violation?.date ||
+                    <button
+                      onClick={handleSave}
+                      disabled={
+                        !editableViolation?.violation?.date ||
                         !editableViolation?.violation?.plate ||
                         !editableViolation?.violation?.type ||
-                        !editableViolation?.violation?.location}
+                        !editableViolation?.violation?.location
+                      }
                       className={`px-4 py-2 rounded-lg text-white text-lg transition ${
                         !editableViolation?.violation?.date ||
                         !editableViolation?.violation?.plate ||
                         !editableViolation?.violation?.type ||
                         !editableViolation?.violation?.location
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          : 'bg-green-600 text-white hover:bg-green-800'
-                      }`}>
+                          ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                          : "bg-green-600 text-white hover:bg-green-800"
+                      }`}
+                    >
                       Save
                     </button>
                   </>
-                )
-                }
-                {isOfficer &&(
+                )}
+                {isOfficer && (
                   <>
-                    <button className="bg-blue-500 text-white px-4 py-2 rounded-lg" 
-                            onClick={() => setIsReportModalOpen(true)}>
-                        Report
+                    <button
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                      onClick={() => setIsReportModalOpen(true)}
+                    >
+                      Report
                     </button>
-                    <button className="bg-yellow-500 text-white px-4 py-2 rounded-lg">
-                        Generate Ticket
+                    <button
+                      className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
+                      onClick={handleGenerateTicket}
+                    >
+                      Generate Ticket
                     </button>
                   </>
-                )
-                }
+                )}
               </div>
             </div>
           </div>
         </div>
         {isReportModalOpen && (
-          <ReportModal violationId={editableViolation.violation.id} 
-                      userId = {userId!}
-                      onClose={() => setIsReportModalOpen(false)} />
+          <ReportModal
+            violationId={editableViolation.violation.id}
+            userId={userId!}
+            onClose={() => setIsReportModalOpen(false)}
+          />
         )}
       </div>
     </RequireAuth>
-
   );
 };
 
