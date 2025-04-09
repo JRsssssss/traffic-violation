@@ -40,10 +40,23 @@ const TrafficViolations = () => {
           {currentViolations.map((violation) => (
             <div
               key={violation.id}
-              className="border rounded-lg p-4 cursor-pointer hover:shadow-lg bg-white flex flex-col items-center"
+              className="border rounded-lg p-4 cursor-pointer hover:shadow-lg bg-white flex flex-col items-center min-h-[250px]"
               onClick={() => handleClick(violation.id)}
             >
-              <Image src='/car.jpg' alt="Violation" width={150} height={100} className="rounded-lg" />
+              {violation.imageUrl && violation.imageUrl.length > 0 ? (
+                <Image
+                  src={violation.imageUrl[0]}
+                  alt="Violation"
+                  width={150}
+                  height={100}
+                  className="rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-[150px] h-[100px] bg-gray-300 flex items-center justify-center rounded-lg text-sm text-gray-600 min-h-[266.8px]">
+                  No Image
+                </div>
+              )}
+
               <p className="mt-2 text-center">{violation.date}</p>
               <p className="text-center">{violation.plate}</p>
               <p className="text-center font-bold">{violation.type}</p>

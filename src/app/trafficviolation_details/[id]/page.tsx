@@ -38,7 +38,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
         if (response) {
           setViolation(response);
           setEditableViolation({ ...response });
-          setMainImage("/car.jpg");
+          setMainImage(response.violation.imageUrl?.[0]);
           console.log(editableViolation.violation.date); // Check if the date value is correct
         } else {
           console.error("Violation not found:", response?.error || "Unknown error");
@@ -102,13 +102,13 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
           <div className="flex flex-col items-center w-1/3 ">
             <Image src={mainImage} alt="Violation" width={250} height={150} className="rounded-lg" />
             <div className="flex gap-2 mt-4">
-              {[violation.img, "/car.jpg", "/car.jpg"].map((img, index) => (
+            {violation.violation.imageUrl?.map((img: string, index: number) => (
                 <Image
                   key={index}
                   src={img}
-                  alt="Thumbnail"
+                  alt={`Thumbnail ${index + 1}`}
                   width={80}
-                  height={40}
+                  height={60}
                   className={`rounded-lg cursor-pointer ${mainImage === img ? "border-2 border-blue-500" : ""}`}
                   onClick={() => setMainImage(img)}
                 />

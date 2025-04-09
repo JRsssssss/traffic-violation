@@ -21,7 +21,6 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
           if (response) {
             setUser(response.user);
             setEditableUser({...response})
-            setImage("/car.jpg");
             console.log(editableUser);
           } else {
             console.error("Violation not found:", response?.error || "Unknown error");
@@ -36,14 +35,6 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
   useEffect(() => {
     console.log("Editable User:", editableUser);
   }, [editableUser]);
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-        const imageUrl = URL.createObjectURL(file);
-        setImage(imageUrl);
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setEditableUser((prev: any) => ({
@@ -84,27 +75,10 @@ const ManageUserDetails = ({ params }: { params: { id: string } }) => {
 
   return (
     <div className="flex flex-col justify-center items-center p-6 bg-[#CFE4F0] rounded-lg h-screen w-full">
-      <div className="bg-white p-8 rounded-lg shadow-lg border w-3/4">
+      <div className="bg-white p-8 rounded-lg shadow-lg border w-1/2">
         <h1 className="text-4xl font-bold text-center text-[#153A75] mb-6">Manage User: {user.name}</h1>
         <div className='flex items-center justify-center gap-5'>
             {/* User Details Form */}
-            <div className="w-1/3 flex flex-col items-center justify-center">
-                                        <div className="w-48 h-48 border shadow-lg rounded-lg overflow-hidden">
-                                            {image ? (
-                                                <img src={image} alt="User Preview" className="w-full h-full object-cover"/>
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                                                    <span className="text-gray-500">Upload Image</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <input 
-                                            type="file" 
-                                            accept="image/*" 
-                                            onChange={handleImageUpload} 
-                                            className="mt-2 text-sm"
-                                        />
-            </div>
             <div className='flex-col'>
               <div className="flex items-center">
                 <label className="w-24 font-semibold text-lg">Username:</label>
