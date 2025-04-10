@@ -8,6 +8,7 @@ import { useAuth } from "@/app/Context/AuthContext";
 import ReportModal from "@/app/reportModal/page";
 import RequireAuth from "@/Components/RequireAuth";
 import { TicketService } from "@/service/ticket";
+import React from "react";
 
 // Define proper types for the violation data
 interface ViolationType {
@@ -23,7 +24,19 @@ interface ViolationData {
   violation: ViolationType;
 }
 
-const ViolationDetail = ({ params }: { params: { id: string } }) => {
+interface PageParams {
+  id: string;
+}
+
+const ViolationDetail = ({
+  params,
+}: {
+  params: PageParams | Promise<PageParams>;
+}) => {
+  // Properly unwrap params object using React.use()
+  const unwrappedParams = React.use(params as Promise<PageParams>);
+  const violationId = unwrappedParams.id;
+
   const router = useRouter();
   const { user } = useAuth();
   const [violation, setViolation] = useState<ViolationData | null>(null);
@@ -38,14 +51,12 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
 
   useEffect(() => {
     const fetchViolation = async () => {
-      const id = params?.id;
-
-      if (id) {
-        const violationId = parseInt(id);
-        const response = await ViolationService.getViolationById(violationId);
+      if (violationId) {
+        const id = parseInt(violationId);
+        const response = await ViolationService.getViolationById(id);
         console.log("API Response:", response);
         console.log("User Id", userId);
-        console.log("Usernaem: ", user!.username);
+        // console.log("Usernaem: ", user!.username);
         console.log("User Role:", user?.role);
         console.log("Is Officer:", isOfficer);
 
@@ -65,7 +76,7 @@ const ViolationDetail = ({ params }: { params: { id: string } }) => {
     };
 
     fetchViolation();
-  }, [params]);
+  }, [violationId, userId, user, isOfficer]);
 
   useEffect(() => {
     console.log("Editable Violation:", editableViolation);
