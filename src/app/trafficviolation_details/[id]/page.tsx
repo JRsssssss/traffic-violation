@@ -9,6 +9,7 @@ import ReportModal from "@/app/reportModal/page";
 import RequireAuth from "@/Components/RequireAuth";
 import { TicketService } from "@/service/ticket";
 import React from "react";
+import ConfirmDialog from "@/Components/confirmationDialog";
 
 // Define proper types for the violation data
 interface ViolationType {
@@ -44,6 +45,9 @@ const ViolationDetail = ({
   const [editableViolation, setEditableViolation] =
     useState<ViolationData | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
+  const [confirmTicketOpen, setConfirmTicketOpen] = useState(false);
 
   const isOfficer = user?.role.toLowerCase() === "officer";
   const isAdministrator = user?.role.toLowerCase() === "administrator";
@@ -97,22 +101,38 @@ const ViolationDetail = ({
 
   const handleSave = async () => {
     if (editableViolation) {
-      const updatedViolation = await ViolationService.updateViolation({
-        id: editableViolation.violation.id,
-        date: new Date(editableViolation.violation.date), // Convert string to Date
-        plate: editableViolation.violation.plate,
-        type: editableViolation.violation.type,
-        location: editableViolation.violation.location,
-      });
-      console.log("Updated Violation:", updatedViolation);
+      try {
+        const updatedViolation = await ViolationService.updateViolation({
+          id: editableViolation.violation.id,
+          date: new Date(editableViolation.violation.date), // Convert string to Date
+          plate: editableViolation.violation.plate,
+          type: editableViolation.violation.type,
+          location: editableViolation.violation.location,
+        });
+        console.log("Updated Violation:", updatedViolation);
+      } catch (error) {
+        console.error("Failed to update violation:", error);
+      }
     }
+  };
+
+  const handleSaveConfirm = () => {
+    setConfirmSaveOpen(true);
   };
 
   const handleRemove = async () => {
     if (editableViolation && editableViolation.violation.id) {
-      await ViolationService.deleteViolation(editableViolation.violation.id);
-      router.push("/trafficviolation");
+      try {
+        await ViolationService.deleteViolation(editableViolation.violation.id);
+        router.push("/trafficviolation");
+      } catch (error) {
+        console.error("Failed to delete violation:", error);
+      }
     }
+  };
+
+  const handleRemoveConfirm = () => {
+    setConfirmRemoveOpen(true);
   };
 
   const handleGenerateTicket = async () => {
@@ -143,6 +163,10 @@ const ViolationDetail = ({
         alert("Failed to generate ticket. Please try again.");
       }
     }
+  };
+
+  const handleTicketConfirm = () => {
+    setConfirmTicketOpen(true);
   };
 
   if (!violation || !editableViolation) {
@@ -240,12 +264,12 @@ const ViolationDetail = ({
                   <>
                     <button
                       className="bg-red-500 text-white px-4 py-2 rounded-lg"
-                      onClick={handleRemove}
+                      onClick={handleRemoveConfirm}
                     >
                       Remove
                     </button>
                     <button
-                      onClick={handleSave}
+                      onClick={handleSaveConfirm}
                       disabled={
                         !editableViolation?.violation?.date ||
                         !editableViolation?.violation?.plate ||
@@ -275,7 +299,7 @@ const ViolationDetail = ({
                     </button>
                     <button
                       className="bg-yellow-500 text-white px-4 py-2 rounded-lg"
-                      onClick={handleGenerateTicket}
+                      onClick={handleTicketConfirm}
                     >
                       Generate Ticket
                     </button>
@@ -285,6 +309,43 @@ const ViolationDetail = ({
             </div>
           </div>
         </div>
+
+        {/* Confirmation Dialogs */}
+        <ConfirmDialog
+          open={confirmSaveOpen}
+          title="Save Changes"
+          message="Are you sure you want to save changes to this violation?"
+          onCancel={() => setConfirmSaveOpen(false)}
+          onConfirm={() => {
+            setConfirmSaveOpen(false);
+            handleSave();
+          }}
+        />
+
+        <ConfirmDialog
+          open={confirmRemoveOpen}
+          title="Remove Violation"
+          message="Are you sure you want to remove this violation? This action cannot be undone."
+          confirmText="Remove"
+          onCancel={() => setConfirmRemoveOpen(false)}
+          onConfirm={() => {
+            setConfirmRemoveOpen(false);
+            handleRemove();
+          }}
+        />
+
+        <ConfirmDialog
+          open={confirmTicketOpen}
+          title="Generate Ticket"
+          message="Are you sure you want to generate a ticket for this violation?"
+          confirmText="Generate"
+          onCancel={() => setConfirmTicketOpen(false)}
+          onConfirm={() => {
+            setConfirmTicketOpen(false);
+            handleGenerateTicket();
+          }}
+        />
+
         {isReportModalOpen && (
           <ReportModal
             violationId={editableViolation.violation.id}
